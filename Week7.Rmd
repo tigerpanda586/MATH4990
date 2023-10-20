@@ -1,0 +1,140 @@
+---
+title: "Week7"
+author: "Jessica Brown"
+date: "2023-09-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is re-analyzing.. and etc stuff from Week 5 & maybe some stuff from Week 6. I am confused, so there may be lots of confusion here. Mostly, I want to revisit models I used in Week 5 to fully understand them more.
+
+Also, I wanted to write the LSTM model in the Week 5 stuff, but it is just too long of a document and I need to break it up. I wrote the KNN models stuff in Week 5 document but wrote it during Week 7 which is right now. Likely, this will be a Week 7 & 8 document as I asked for an extension to work on this stuff from my professor.
+
+He wants me to write general manuscript which I am doing on google docs, but I realized how much I don't understand certain things and how I'm not confident in certain results and stuff.
+
+I am mostly solid on SMS and ARIMA.. but I want to test what type of dataset that I am using. As every model has different parameters that can be used.. Just in general, I want to make sure I understand everything so I can write it down in my manuscript with references & just sensical things!!! SENSICAL!! I need to do such a thing because otherwise I am not satisfied or confident in what I did.
+
+```{r}
+
+library(lubridate)
+library(here)
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+#First: Bring in all useful data that I have saved to text files for my convenience
+
+data_2022 = read.table(here("Datasets", "data_2022.txt"))
+fore_expxmth = read.table(here("Datasets", "fore_expxmth.txt"))
+fore_holtexpxmth = read.table(here("Datasets", "fore_holtexpxmth.txt"))
+fore_arimaauto = read.table(here("Datasets", "fore_arimaauto.txt"))
+fore_arimamine = read.table(here("Datasets", "fore_arimamine.txt"))
+prophet_sum = read.table(here("Datasets", "prophet_sum.txt"))
+fore_knn = read.table(here("Datasets", "fore_knn.txt"))
+date_list_2022 = read.table(here("Datasets", "date_list_2022.txt"))
+data_MissingPerson_II = read.table(here("Datasets", "data_MissingPerson_II.txt"), fill = TRUE)
+data_months_vertical = read.table(here("Datasets", "data_months_vertical.txt"))
+error_tables = read.table(here("Datasets", "error_tables.txt"))
+
+```
+
+Now to experiment with graphs
+
+```{r}
+
+#Turn all data into time-series for plotting ease
+data_ts = ts(data_months_vertical, frequency = 12, start = c(2018, 1))
+arimaauto_ts = ts(fore_arimaauto$Point.Forecast, frequency = 12, start = c(2022, 1))
+expxmth_ts = ts(fore_expxmth$Point.Forecast, frequency = 12, start = c(2022, 1))
+holtexpxmth_ts = ts(fore_holtexpxmth$Point.Forecast, frequency = 12, start = c(2022, 1))
+knn_ts = ts(fore_knn$prediction.prediction, frequency = 12, start = c(2022, 1))
+prophet_ts = ts(prophet_sum$Freq, frequency = 12, start = c(2022, 1))
+actual_ts = ts(data_2022$Freq[49:54], frequency = 12, start = c(2022, 1))
+arimamine_ts = ts(fore_arimamine$Point.Forecast, frequency = 12, start = c(2022, 1))
+
+#Make a df for each of these time-series because time-series ain't cutting it
+
+#Make list of null to make my life easier
+list = c(1:48)
+i = 1
+while(i <= 48){
+  list[i] = list(NA)
+  i = i + 1
+}
+
+#Do this for forecast dates (makes my life easier)
+dates_2022 = c("2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06")
+
+arimaauto_df = data.frame(c(1:54))
+arimaauto_df$x2 = 0
+arimaauto_df$x2[49:54] = arimaauto_ts
+colnames(arimaauto_df) = c("y", "x")
+
+
+expxmth_df = data.frame(c(1:54))
+expxmth_df$x2 = 0
+expxmth_df$x2[49:54] = expxmth_ts
+colnames(expxmth_df) = c("y", "x")
+
+holtexpxmth_df = data.frame(c(1:54))
+holtexpxmth_df$x2 = 0
+holtexpxmth_df$x2[49:54] = holtexpxmth_ts
+colnames(holtexpxmth_df) = c("y", "x")
+
+knn_df = data.frame(c(1:54))
+knn_df$x2 = 0
+knn_df$x2[49:54] = knn_ts
+colnames(knn_df) = c("y", "x")
+
+prophet_df = data.frame(c(1:54))
+prophet_df$x2 = 0
+prophet_df$x2[49:54] = prophet_ts
+colnames(prophet_df) = c("y", "x")
+
+arimamine_df = data.frame(c(1:54))
+arimamine_df$x2 = 0
+arimamine_df$x2[49:54] = arimamine_ts
+colnames(arimamine_df) = c("y", "x")
+
+actual_df = data.frame(c(1:54))
+actual_df$x2 = 0
+actual_df$x2[49:54] = actual_ts
+actual_df$x2[1:48] = list
+colnames(actual_df) = c("y", "x")
+
+data_df = data.frame(data_2022 %>%  filter(!row_number() %in% c(55:60)))
+data_df$x2 = c(1:54)
+colnames(data_df) = c ("y", "x")
+data_df$y[49:54] = list
+
+legend_df = knn_df
+
+typeof(arimaauto_df$x)
+typeof(arimaauto_df$y)
+#Now to plot the data
+plot(data_df$x, ylab = "Incident Reported Per Month", xlab = "Time", y = data_df$y) + lines(data_df$x, data_df$y) + lines(knn_df$x, type = "b", col = 4) + lines(holtexpxmth_df$x, type = "b", col = 3) + lines(prophet_df$x, type = "b", col = 2) + lines(arimaauto_df$x, type = "b", col = 1) + lines(expxmth_df$x, type = "b", col = 6) + lines(arimamine_df$x, type = "b", col = 5) + lines(expxmth_df$x, type = "p", col = 9)
+
+#plot(data_df$x, ylab = "Incident Reported Per Month", xlab = "Time", y = data_df$y) + legend(35, 215, legend = c("knn", "holts", "proph", "a(011)", "a(532)", "sms"), col = c("#444", "#333", "#222", "#111", "#666", "#999"))
+
+#lines(actual_df, type = "l", col = 1) + lines(arimaauto_df, type = "l", col = 2) + lines(expxmth_df, col = 3, type = "l") + lines(holtexpxmth_df, col = 4, type = "l")
+knn_ts
+
+```
+Here is the bar plot of Errors
+
+```{r}
+error_tables = subset(error_tables, )
+barplot(error_tables$MAE, names.arg = c("SMS", "Holt's", "A(5,3,2)", "A(0,1,1)", "Prophet", "KNN"), col = c(2,3,4,5,7), main = "Mean Absolute Error")
+
+barplot(error_tables$TS, names.arg = c("SMS", "Holt's", "A(5,3,2)", "A(0,1,1)", "Prophet", "KNN"), col = c(2,3,4,5,7), main = "Tracking Signal")
+
+barplot(error_tables$MSE, names.arg = c("SMS", "Holt's", "A(5,3,2)", "A(0,1,1)", "Prophet", "KNN"), col = c(2,3,4,5,7), main = "Mean Squared Error")
+
+barplot(error_tables$RSFE, names.arg = c("SMS", "Holt's", "A(5,3,2)", "A(0,1,1)", "Prophet", "KNN"), col = c(2,3,4,5,7), main = "Running Sum of Error")
+
+
+```
+

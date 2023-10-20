@@ -1,0 +1,316 @@
+---
+title: "Week5"
+author: "Jessica Brown"
+date: "2023-09-12"
+output: html_document
+---
+
+```{r}
+#Set up for incoming code
+library(readr)
+library(ggplot2)
+library(forecast)
+library(fpp2)
+library(TTR)
+library(dplyr)
+library(lubridate)
+library(here)
+library(prophet)
+
+data = read.csv(here("Datasets", "Police_Department_Incident_Reports__2018_to_Present.csv"))
+
+#not using 2023 & analyzing missing person only
+data = data.frame(subset(data, Incident.Year != 2023 & 
+Incident.Category == "Missing Person"))
+
+#Lubridate datetime columns
+data$Incident.Datetime = parse_date_time(data$Incident.Datetime, 
+orders = "mdy HM")
+data$Incident.Date = parse_date_time(data$Incident.Date, 
+orders = "mdy")
+
+#Make a column for month & store month value for every column
+data$Incident.Month = 0 ; i = 0; j = length(data$Incident.Date)
+while(i <= j){
+  data$Incident.Month[i] = month(data$Incident.Date[i])
+  i = i + 1
+}
+rm(i)
+rm(j)
+
+#Now, only get data for given year
+data_2022 = data.frame(subset(data, Incident.Year == 2022))
+
+#Count how many incidents per month for given year
+data_2022 = data.frame(table(data_2022$Incident.Month))
+
+
+#Do for all years
+data_2021 = data.frame(subset(data, Incident.Year == 2021))
+data_2020 = data.frame(subset(data, Incident.Year == 2020))
+data_2019 = data.frame(subset(data, Incident.Year == 2019))
+data_2018 = data.frame(subset(data, Incident.Year == 2018))
+
+data_2021 = data.frame(table(data_2021$Incident.Month))
+data_2020 = data.frame(table(data_2020$Incident.Month))
+data_2019 = data.frame(table(data_2019$Incident.Month))
+data_2018 = data.frame(table(data_2018$Incident.Month))
+
+#Combine all year's month count data into one df
+data_months_vertical = rbind(data_2018, data_2019, data_2020, data_2021)
+data_months_vertical = data.frame(data_months_vertical$Freq)
+
+#Rename col for later shenanigans
+colnames(data_months_vertical) = c("Freq")
+
+#Remove separate datasets from environment (except 2022 because that's test data)
+rm(data_2021)
+rm(data_2020)
+rm(data_2019)
+rm(data_2018)
+
+#Make a Time-Series w/ 2018-2022
+data_ts = ts(data_months_vertical, frequency = 12, start = c(2018, 1))
+data_ts
+#Plot Time-Series
+plot.ts(data_ts)
+
+```
+```{r}
+
+#Plot inididual components of time-series (random, seasonal, trend, observed)
+data_ts_components = decompose(data_ts)
+plot(data_ts_components)
+```
+
+Above is a time-series that R provides without any type of predictive modelling. We are going to be using predictive models to predict or forecast data for 2022 from 2018-2021 data.
+
+First, I will display the actual 2022 time-series data so the below models can be compared to the actuality. Whichever model is closest shows what type of model is the best predictor for this data set.
+
+```{r}
+data_2022 = data.frame(data_2022$Freq)
+colnames(data_2022) = c("Freq")
+data_2022 = rbind(data_months_vertical, data_2022)
+data_2022_ts = ts(data_2022, frequency = 12, start = c(2018, 1))
+data_2022_ts
+plot.ts(data_2022_ts)
+```
+
+Now, the first time-series model to be used will be Simple Exponential Smoothing.
+
+```{r}
+#Apparently,  "simple exponential smoothing" only uses alpha so you set beta & gamma to false
+data_ts_expsmth = HoltWinters(data_ts, beta = F, gamma = F)
+
+#Display alpha
+data_ts_expsmth
+```
+
+
+```{r}
+#Display Exp Smoothing Plot
+plot(data_ts_expsmth)
+fore_expxmth = forecast(data_ts_expsmth, h = 12)
+plot(fore_expxmth)
+fore_expxmth
+```
+
+
+
+```{r}
+#Holt's Exponential Smoothing uses beta and alpha
+data_ts_holt_expsmth = HoltWinters(data_ts, gamma = F)
+
+#Display all Holt-Winters information
+data_ts_holt_expsmth
+```
+
+Here is Holt's exponential smoothing. The difference between this type and Simple Exponential Smoothing is that the latter uses only alpha while the former uses both alpha and beta.
+
+
+```{r}
+#Plot Holt Winter's Exp Smoothing
+plot(data_ts_holt_expsmth)
+fore_holtexpsmth = forecast(data_ts_holt_expsmth, h = 12)
+plot(fore_holtexpsmth)
+fore_holtexpsmth
+```
+
+Now, we will do ARIMA modelling. To do ARIMA modelling, you have to acheive a stationary mean, meaning that the mean does not fluctuate much overtime. The way you do this is through the diff() function. You increase the number in the differences parameter until the mean looks "stationary"
+
+
+```{r}
+data_ts_arima = diff(data_ts, differences = 1)
+plot(data_ts_arima)
+
+data_ts_arima = diff(data_ts, differences = 2)
+plot(data_ts_arima)
+
+data_ts_arima = diff(data_ts, differences = 3)
+plot(data_ts_arima)
+
+d = 3
+
+#At 3 differences, as you can see in the output, it has a pretty decent stationary mean
+```
+
+The ARIMA model uses 3 values ARIMA(p, d, q). We have already found d which is the number of difference. In our case, this is 3. Now, we must find the values of p & q.
+
+To get q, we have to use a correlogram WITH the DIFFERENCES Time-Series.
+
+```{r}
+acf(data_ts_arima, lag.max = 20)
+acf(data_ts_arima, lag.max = 20, plot = F)
+
+q = 2
+```
+As the lags tail off to zero after 2, it's safe to say that q = 2.
+
+Now to find p, we do the same thing but with a partial correlogram.
+
+```{r}
+pacf(data_ts_arima, lag.max = 20)
+pacf(data_ts_arima, lag.max = 20, plot = F)
+
+p = 5
+```
+
+This plot shows that after 5, the lag tails off to 0 therfore p = 5.
+
+To specifically use the ARIMA auto regressive model, you'd plot ARIMA(p, 0). The moving average is ARIMA(0, q). Lastly, the ARIMA mixed model which uses both auto regression and a moving average will be plotted with ARIMA(p, q). We have no reason to use the specific models, so we are using the mixed model.
+
+```{r}
+fit = Arima(data_ts, order = c(p, d, q))
+plot(fit$x)
+fore_arimamine = forecast(fit, h = 12)
+plot(fore_arimamine)
+fore_arimamine
+
+```
+This function tells you the ARIMA model you should use without all the extra work, but it gave me something completely else...
+```{r}
+auto.arima(data_ts)
+fit2 = Arima(data_ts, order = c(0, 1, 1))
+plot(fit2$x)
+fore_arimaauto = forecast(fit2, h = 12)
+plot(fore_arimaauto)
+fore_arimaauto
+
+#prophet_df_ts2 = prophet(prophet_df2)
+#fitting4 = make_future_dataframe(prophet_df_ts2, periods = 365)
+#prediction = predict(prophet_df_ts2, fitting4)
+#plot(prophet_df_ts2, prediction)
+```
+
+
+
+
+
+```{r}
+#Doing some cleanup of unneeded variables
+rm(d)
+rm(q)
+rm(p)
+rm(data_ts_arima)
+rm(data_ts)
+rm(data_2022_ts)
+rm(fit)
+rm(fit2)
+rm(data_ts_components)
+rm(data_ts_expsmth)
+rm(data_ts_holt_expsmth)
+```
+
+
+Lastly, we will do a prediction with the Facebook Prophet model. The first graph is without predicition and the second is with prediciton. For this graph, the data that Prophet Facebook uses is daily data, so I did it daily versus by month. If you do it by month, the predictions come out very weird looking.
+
+```{r}
+#Prophet requires a different dataframe structure, so we must restructure our initial dataframe that was used for all above predictions. It needs an additional column that holds date information
+
+prophet_df = data.frame(subset(data, data$Incident.Year < 2022))
+prophet_df = data.frame(prophet_df$Incident.Date)
+prophet_df = data.frame(table(prophet_df$prophet_df.Incident.Date))
+
+#Very specifically, this model demands a column called ds (datetime) and y (values) so rename the columns
+colnames(prophet_df) = c("ds", "y")
+
+#All of these are propher built in functions. I don't fully understand these. I read a tutorial to do this.
+prophet_df_ts = prophet(prophet_df)
+fitting = make_future_dataframe(prophet_df_ts, periods = 1)
+prediction = predict(prophet_df_ts, fitting)
+
+#Graph without prediction
+plot(prophet_df_ts, prediction)
+
+#Graph with one year prediction
+fitting2 = make_future_dataframe(prophet_df_ts, periods = 365)
+prediction = predict(prophet_df_ts, fitting2)
+plot(prophet_df_ts, prediction)
+
+
+#These take prediction and make it into a prediction table by MONTH instead of accounting for every year
+prophet_sum = data.frame(c(1:12))
+prophet_sum$trend = 0
+
+prophet_pred_2022 = data.frame(subset(prediction, year(prediction$ds) == 2022))
+prophet_pred_2022 = prophet_pred_2022[,1:2]
+prophet_pred_2022$ds = month(prophet_pred_2022$ds)
+i = 1
+
+while(length(prophet_pred_2022$ds) >= i){
+  curmonth = prophet_pred_2022$ds[i]
+  prophet_sum$trend[curmonth] = prophet_sum$trend[curmonth] + prophet_pred_2022$trend[i]
+  i = i + 1
+}
+
+```
+
+
+I will show the wonky version that's given with the month version. The problem is that with Facebook Prophet one period is equal to one day, and if you use monthly data, I only have one point per 28-31 days. Therefore, when I add 365 points for a year, instead of 12, the graph is amazingly out of range. The scale of the graph changes completely.
+
+```{r}
+#All this loop does is construct a datetime object. It looks complicated, but I properly wrote it the fastest of anything.
+
+prophet_df2 = data_months_vertical
+prophet_df2$ds = 0
+
+i = 1
+while(i <= length(prophet_df2$Freq)){
+  j = "String"
+  month = "STRING"
+  if(i <= 12)
+    j = "2018-"
+  else if(i <= 24)
+    j = "2019-"
+  else if(i <= 36)
+    j = "2020-"
+  else
+    j = "2021-"
+  
+  month = i %% 12
+  if(month == 0)
+    month = 12
+  if(month < 10)
+    month = paste(0, month, sep = "")
+  o = paste(j, month, "-15", sep = "")
+  prophet_df2$ds[i] = o
+  
+  i = i + 1
+}
+
+#Rename columns
+colnames(prophet_df2) = c("y", "ds")
+
+#Graph without prediction
+prophet_df_ts2 = prophet(prophet_df2)
+fitting3 = make_future_dataframe(prophet_df_ts2, periods = 1)
+prediction = predict(prophet_df_ts2, fitting3)
+plot(prophet_df_ts2, prediction)
+
+#Graph with one year prediction
+fitting4 = make_future_dataframe(prophet_df_ts2, periods = 365)
+prediction = predict(prophet_df_ts2, fitting4)
+plot(prophet_df_ts2, prediction)
+prediction
+```
+

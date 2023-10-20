@@ -1,0 +1,78 @@
+---
+title: "Week4_MP"
+author: "Jessica Brown"
+date: "2023-09-06"
+output: html_document
+---
+
+
+1) How many with no Neighborhoods?
+
+For the Missing Person category using data from 2018 - 2022, there were a total of 4 missing neighborhoods out of 9494 which is very unsignificant.
+
+```{r}
+library(ggplot2)
+all_df_list$No_Neighborhood_Count
+```
+
+
+```{r}
+all_df_list$No_Neighborhood_Count %>% ggplot(aes(x = Field, y = Value, color = "#aaa", fill = "#111")) + labs(x = "No Neighborhood", y = "Count") + geom_bar(stat = "identity", width = .3, show.legend = F)
+```
+
+
+2) Number of Crimes per month?
+
+```{r}
+all_df_list$Month_df %>% ggplot(aes(x = Month, y = Count)) + geom_bar(stat = "identity", color = "black", fill = "#00abff") + labs(title = "Missing Person Incidents For All Months of 2018-2022") + theme_gray()
+```
+```{r}
+list2$Month_df %>% ggplot(aes(x = Month, y = Count, color = Month)) + geom_point(size = 2) + geom_line(color = "#777777") + labs(title = "Missing Person Incidents For All Months of 2018-2022") + theme_gray()
+```
+
+3) Distribution for time of week?
+
+```{r}
+all_df_list$Week_df %>% ggplot(aes(x = Number, y = Count), color = Week) + geom_bar(stat = "identity", color = "black", fill = "#00abff") + labs(title = "Missing Person Incidents For All Months of 2018-2022") + theme_gray()
+```
+
+```{r}
+list2$Week_df %>% ggplot(aes(x = Count, y = Count2, color = Count)) + geom_point(size = 3) + geom_line(color = "gray") + labs(title = "Missing Person Incidents For All Weeks of 2018-2022") + theme_gray()
+```
+
+4) Distribution for time of day?
+```{r}
+all_df_list$Hour_df %>% ggplot(aes(x = Hour, y = Count), color = Hour) + geom_bar(stat = "identity", color = "black", fill = "#00abff") + labs(title = "Missing Person Incidents For All Months of 2018-2022") + theme_gray()
+```
+
+
+```{r}
+list2$Hour_df %>% ggplot(aes(x = Hour, y = Count, color = Count)) + geom_point(size = 2) + labs(title = "Missing Person Incidents For All Weeks of 2018-2022") +geom_line() + theme_gray()
+```
+
+5) How Many Were Found?
+
+8066 people out of 9494 reports.
+```{r}
+all_df_list$Found_df
+```
+```{r}
+all_df_list$Found_df %>% ggplot(aes(x = Found, y = Count, color = "#666", fill = "#000")) + geom_bar(stat = "identity", width = .3, show.legend = F)
+```
+
+6) Top 5 Neighborhoods?
+
+```{r}
+all_df_list$`Top 5`
+
+```
+
+
+
+```{r}
+all_df_list$`Top 5` %>% ggplot(aes(x = Neighborhood, y = Count, color = "#666", fill = "#000")) + geom_bar(stat = "identity", width = .7, show.legend = F)
+```
+
+```{r}
+all_df_list$Neighborhood_Count %>% ggplot(aes(x = Neighborhood, y = Count, color = Neighborhood)) + geom_bar(stat = "identity", width = .7, show.legend = T)
+```

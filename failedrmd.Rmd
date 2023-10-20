@@ -1,0 +1,48 @@
+#Library in these to make graphs
+library(ggplot2)
+library(here)
+library(dplyr)
+library(readr)
+
+cur_df = data.frame(df_cat$Category, df_cat$Category_Count)
+cur_df
+plot = ggplot(cur_df) + geom_bar(aes(x = "Type of Crime"))
+plot
+
+i = 1
+ans = 0
+while(length(data_2022$Freq) > i){
+  ans = ans + data_2022$Freq[i]
+  i = i + 1
+}
+
+Apparently to define model, we need to make a list of length three which inculdes the 3 variables: samples, timesteps, features. Batch size must be a common factor of the length of the training set, and units is how many predictions will be made.
+
+#dim(data_ts) = c(length(data_ts), 1, 1)
+
+#All this does is set single variables instead of keep in a list
+#bruh1 = dim(data_ts)[2]
+#bruh2 = dim(data_ts)[3]
+
+
+#From here, I am copying directly from: http://rwanjohi.rbind.io/2018/04/05/time-series-forecasting-using-lstm-in-r/
+
+#model = keras_model_sequential(l
+
+devtools::install_github("rstudio/git")
+reticulate::install_python(version = "<version>")
+tensorflow::install_tensorflow()
+
+reticulate::repl_python()
+
+
+
+
+
+
+
+
+
+
+
+
