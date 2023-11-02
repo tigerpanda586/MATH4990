@@ -1,0 +1,171 @@
+---
+title: "LSTM_Graphed"
+author: "Jessica Brown"
+date: "2023-11-01"
+output: html_document
+---
+```{r setup, include=FALSE} 
+#Say No to Warnings! It makes my document ugly!
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+Always import your libraries first.
+```{r}
+library(here)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(RColorBrewer)
+library(wesanderson)
+
+```
+
+Hello. Welcome to my graphing documents. I have 30 txt documents to import before I do anything.. They were made in Python by analyzing data produced by the LSTM model in tensorflow and keras libraries. I will also put them all into a pretty big dataframe. Lots of stuff here.
+
+```{r}
+E100_LR1 = read.table(here("Datasets", "LSTM_Errors_E100_LR1.txt"))
+E100_LRp1 = read.table(here("Datasets", "LSTM_Errors_E100_LRp1.txt"))
+E100_LRp01 = read.table(here("Datasets", "LSTM_Errors_E100_LRp01.txt"))
+E100_LRp001 = read.table(here("Datasets", "LSTM_Errors_E100_LRp001.txt"))
+E100_LRp0001 = read.table(here("Datasets", "LSTM_Errors_E100_LRp0001.txt"))
+E100_LRp00001 = read.table(here("Datasets", "LSTM_Errors_E100_LRp00001.txt"))
+
+E200_LR1 = read.table(here("Datasets", "LSTM_Errors_E200_LR1.txt"))
+E200_LRp1 = read.table(here("Datasets", "LSTM_Errors_E200_LRp1.txt"))
+E200_LRp01 = read.table(here("Datasets", "LSTM_Errors_E200_LRp01.txt"))
+E200_LRp001 = read.table(here("Datasets", "LSTM_Errors_E200_LRp001.txt"))
+E200_LRp0001 = read.table(here("Datasets", "LSTM_Errors_E200_LRp0001.txt"))
+E200_LRp00001 = read.table(here("Datasets", "LSTM_Errors_E200_LRp00001.txt"))
+
+E300_LR1 = read.table(here("Datasets", "LSTM_Errors_E300_LR1.txt"))
+E300_LRp1 = read.table(here("Datasets", "LSTM_Errors_E300_LRp1.txt"))
+E300_LRp01 = read.table(here("Datasets", "LSTM_Errors_E300_LRp01.txt"))
+E300_LRp001 = read.table(here("Datasets", "LSTM_Errors_E300_LRp001.txt"))
+E300_LRp0001 = read.table(here("Datasets", "LSTM_Errors_E300_LRp0001.txt"))
+E300_LRp00001 = read.table(here("Datasets", "LSTM_Errors_E300_LRp00001.txt"))
+
+E500_LR1 = read.table(here("Datasets", "LSTM_Errors_E500_LR1.txt"))
+E500_LRp1 = read.table(here("Datasets", "LSTM_Errors_E500_LRp1.txt"))
+E500_LRp01 = read.table(here("Datasets", "LSTM_Errors_E500_LRp01.txt"))
+E500_LRp001 = read.table(here("Datasets", "LSTM_Errors_E500_LRp001.txt"))
+E500_LRp0001 = read.table(here("Datasets", "LSTM_Errors_E500_LRp0001.txt"))
+E500_LRp00001 = read.table(here("Datasets", "LSTM_Errors_E500_LRp00001.txt"))
+
+E1000_LR1 = read.table(here("Datasets", "LSTM_Errors_E1000_LR1.txt"))
+E1000_LRp1 = read.table(here("Datasets", "LSTM_Errors_E1000_LRp1.txt"))
+E1000_LRp01 = read.table(here("Datasets", "LSTM_Errors_E1000_LRp01.txt"))
+E1000_LRp001 = read.table(here("Datasets", "LSTM_Errors_E1000_LRp001.txt"))
+E1000_LRp0001 = read.table(here("Datasets", "LSTM_Errors_E1000_LRp0001.txt"))
+E1000_LRp00001 = read.table(here("Datasets", "LSTM_Errors_E1000_LRp00001.txt"))
+
+```
+
+Now that we've imported everything, we will make two big dataframes. One for the by_Month data and the other for the by_Day data.
+
+```{r}
+by_day = data.frame(rbind(E100_LR1[1,], E100_LRp1[1,],
+E100_LRp01[1,], E100_LRp001[1,], E100_LRp0001[1,], E100_LRp00001[1,], E200_LR1[1,], E200_LRp1[1,], E200_LRp01[1,], E200_LRp001[1,], E200_LRp0001[1,], E200_LRp00001[1,], E300_LR1[1,], E300_LRp1[1,], E300_LRp01[1,], E300_LRp001[1,], E300_LRp0001[1,], E300_LRp00001[1,], E500_LR1[1,], E500_LRp1[1,], E500_LRp01[1,], E500_LRp001[1,], E500_LRp0001[1,], E500_LRp00001[1,], E1000_LR1[1,], E1000_LRp1[1,], E1000_LRp01[1,], E1000_LRp001[1,], E1000_LRp0001[1,], E1000_LRp00001[1,]))
+
+by_month = data.frame(rbind(E100_LR1[2,], E100_LRp1[2,],
+E100_LRp01[2,], E100_LRp001[2,], E100_LRp0001[2,], E100_LRp00001[2,], E200_LR1[2,], E200_LRp1[2,], E200_LRp01[2,], E200_LRp001[2,], E200_LRp0001[2,], E200_LRp00001[2,], E300_LR1[2,], E300_LRp1[2,], E300_LRp01[2,], E300_LRp001[2,], E300_LRp0001[2,], E300_LRp00001[2,], E500_LR1[2,], E500_LRp1[2,], E500_LRp01[2,], E500_LRp001[2,], E500_LRp0001[2,], E500_LRp00001[2,], E1000_LR1[2,], E1000_LRp1[2,], E1000_LRp01[2,], E1000_LRp001[2,], E1000_LRp0001[2,], E1000_LRp00001[2,]))
+```
+
+Sadly, in order to graph these the way I want, I have to add an additional two columns in each dataframe. This is needed to specify the epochs and learning rates which are stated in the row name, but we need them explicitly in a column as well for graphing.. I will do so manually as I imported and added to dataframes in a "pattern" making this easy to do.
+
+```{r}
+by_day$Epoch = c(100,100,100,100,100,100,
+                 200,200,200,200,200,200,
+                 300,300,300,300,300,300,
+                 500,500,500,500,500,500,
+                 1000,1000,1000,1000,1000,1000)
+
+by_day$LearningRate = c("1",".1",".01",".001",".0001",".00001",                                   "1",".1",".01",".001",".0001",".00001",
+                        "1",".1",".01",".001",".0001",".00001",
+                        "1",".1",".01",".001",".0001",".00001",
+                        "1",".1",".01",".001",".0001",".00001")
+
+by_month$Epoch = c(100,100,100,100,100,100,
+                 200,200,200,200,200,200,
+                 300,300,300,300,300,300,
+                 500,500,500,500,500,500,
+                 1000,1000,1000,1000,1000,1000)
+by_month$LearningRate = c("1",".1",".01",".001",".0001",".00001",                                   "1",".1",".01",".001",".0001",".00001",
+                          "1",".1",".01",".001",".0001",".00001",
+                          "1",".1",".01",".001",".0001",".00001",
+                          "1",".1",".01",".001",".0001",".00001")
+```
+
+Now we're going to attempt to graph this stuff. I want to do the X axis as Epochs, Y axis as the actual value whether it be TS, RSFE, or whatever. Then the Learning rate will be colored. There will be two "types" of graphs for each forecasting error but 4 total. This is because two will be for the by_day data and the other two will be for the by_month data.
+
+I kind of feel happy that I also saved the raw results because if I ever have to recalculate anything, I don't have to re-do the runs. Because trust me that they took FOREVER.
+
+First is MAE (Mean Absolute Error). Note we are using the library ggplot2. General information about this code.. geom_point puts points on my graph using X & Y coordinates declared in aes() parameter before it. geom_smooth will draw lines through my points. Since in aes(), I declared a color based on the learning rates, every separate learning rate will get its own geom_smooth line. theme_<> gives specifc themes. There are many types you can experiment with. Everything else should be more or less self-explanatory.
+
+```{r}
+by_day %>% ggplot(aes(Epoch, MAE, color = LearningRate)) + geom_point(size = 2) + geom_smooth(linewidth = .5) + labs(title = "Mean Absolute Error (MAE) By Day") + theme_minimal() + scale_color_manual(breaks = c("1", ".1", ".01", ".001", ".0001", ".00001"),
+values=c("#3399ff", "#330099", "#009966", "#660033", "#ff3399", "#33FF00"))
+
+by_day %>% ggplot(aes(Epoch, MAE)) + geom_point(size = 2, color = "orange") + geom_smooth(linewidth = .5, color = "black") + labs(title = "Mean Absolute Error (MAE) By Day") + theme_minimal()
+```
+
+The same graphs for Tracking Signal (TS). Subsequent for all graphs below, the only difference is that I replace "MAE" with "TS." Really. That's it.
+
+```{r}
+by_day %>% ggplot(aes(Epoch, TS, color = LearningRate)) + geom_point(size = 2) + geom_smooth(linewidth = .5) + labs(title = "LSTM Tracking Signal (TS) By Day") + theme_minimal() + scale_color_manual(breaks = c("1", ".1", ".01", ".001", ".0001", ".00001"),
+values=c("#3399ff", "#330099", "#009966", "#660033", "#ff3399", "#33FF00"))
+
+by_day %>% ggplot(aes(Epoch, TS)) + geom_point(size = 2, color = "orange") + geom_smooth(linewidth = .5, color = "black") + labs(title = "LSTM Tracking Signal (TS) By Day") + theme_minimal()
+
+```
+
+
+For Mean Squared Error (MSE):
+
+```{r}
+by_day %>% ggplot(aes(Epoch, MSE, color = LearningRate)) + geom_point(size = 2) + geom_smooth(linewidth = .5) + labs(title = "LSTM Mean Squarred Error (MSE) By Day") + theme_minimal() + scale_color_manual(breaks = c("1", ".1", ".01", ".001", ".0001", ".00001"),
+values=c("#3399ff", "#330099", "#009966", "#660033", "#ff3399", "#33FF00"))
+
+by_day %>% ggplot(aes(Epoch, MSE)) + geom_point(size = 2, color = "orange") + geom_smooth(linewidth = .5, color = "black") + labs(title = "LSTM Mean Squarred Error (MSE) By Day") + theme_minimal()
+```
+
+For Running Sum Forecast Error:
+
+```{r}
+by_day %>% ggplot(aes(Epoch, RSFE, color = LearningRate)) + geom_point(size = 2) + geom_smooth(linewidth = .5) + labs(title = "LSTM Running Sum Forecast Error (RSFE) By Day") + theme_minimal() + scale_color_manual(breaks = c("1", ".1", ".01", ".001", ".0001", ".00001"),
+values=c("#3399ff", "#330099", "#009966", "#660033", "#ff3399", "#33FF00"))
+
+by_day %>% ggplot(aes(Epoch, RSFE)) + geom_point(size = 2, color = "orange") + geom_smooth(linewidth = .5, color = "black") + labs(title = "LSTM Running Sum Forecast Error By Day") + theme_minimal()
+
+```
+
+Now for the by_month data. I will basically copy the code for by_day and just put "by_month" instead. I am going to copy this all in one chunk for simplicity. It's the same thing as above.
+ 
+```{r}
+by_month %>% ggplot(aes(Epoch, MAE, color = LearningRate)) + geom_point(size = 2) + geom_smooth(linewidth = .5) + labs(title = "LSTM Mean Absolute Error (MAE) By Month") + theme_minimal() + scale_color_manual(breaks = c("1", ".1", ".01", ".001", ".0001", ".00001"),
+values=c("#3399ff", "#330099", "#009966", "#660033", "#ff3399", "#33FF00"))
+
+by_month %>% ggplot(aes(Epoch, MAE)) + geom_point(size = 2, color = "orange") + geom_smooth(linewidth = .5, color = "black") + labs(title = "LSTM Mean Absolute Error (MAE) By Month") + theme_minimal()
+
+by_month %>% ggplot(aes(Epoch, TS, color = LearningRate)) + geom_point(size = 2) + geom_smooth(linewidth = .5) + labs(title = "LSTM Tracking Signal (TS) By Month") + theme_minimal() + scale_color_manual(breaks = c("1", ".1", ".01", ".001", ".0001", ".00001"),
+values=c("#3399ff", "#330099", "#009966", "#660033", "#ff3399", "#33FF00"))
+
+by_month %>% ggplot(aes(Epoch, TS)) + geom_point(size = 2, color = "orange") + geom_smooth(linewidth = .5, color = "black") + labs(title = "LSTM Tracking Signal (TS) By Month") + theme_minimal()
+
+by_month %>% ggplot(aes(Epoch, MSE, color = LearningRate)) + geom_point(size = 2) + geom_smooth(linewidth = .5) + labs(title = "LSTM Mean Squarred Error (MSE) By Month") + theme_minimal() + scale_color_manual(breaks = c("1", ".1", ".01", ".001", ".0001", ".00001"),
+values=c("#3399ff", "#330099", "#009966", "#660033", "#ff3399", "#33FF00"))
+
+by_month %>% ggplot(aes(Epoch, MSE)) + geom_point(size = 2, color = "orange") + geom_smooth(linewidth = .5, color = "black") + labs(title = "LSTM Mean Squarred Error (MSE) By Month") + theme_minimal()
+
+by_month %>% ggplot(aes(Epoch, RSFE, color = LearningRate)) + geom_point(size = 2) + geom_smooth(linewidth = .5) + labs(title = "LSTM Running Sum Forecast Error (RSFE) By Month") + theme_minimal() + scale_color_manual(breaks = c("1", ".1", ".01", ".001", ".0001", ".00001"),
+values=c("#3399ff", "#330099", "#009966", "#660033", "#ff3399", "#33FF00"))
+
+by_month %>% ggplot(aes(Epoch, RSFE)) + geom_point(size = 2, color = "orange") + geom_smooth(linewidth = .5, color = "black") + labs(title = "LSTM Running Sum Forecast Error By Month") + theme_minimal()
+
+```
+ 
+The Tracking Signal By Month graphs are ugly, so to explain why.. I am going to print out that segment of the dataframe. Really it's for my ease because I'm using these to make an additional google document. I know.. it's a lot of documents.
+
+```{r}
+data.frame(by_month$TS)
+```
+
+
