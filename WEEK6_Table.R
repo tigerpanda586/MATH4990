@@ -16,6 +16,16 @@ fore_arimaauto = read.table(here("Datasets", "fore_arimaauto.txt"))
 fore_arimamine = read.table(here("Datasets", "fore_arimamine.txt"))
 prophet_sum = read.table(here("Datasets", "prophet_sum.txt"))
 fore_knn = read.table(here("Datasets", "fore_knn.txt"))
+LSTM_ByMonth = read.table(here("Datasets", "lSTM_Test_ByMonth.txt"))
+LSTM_ByDay = read.table(here("Datasets", "lSTM_Test_ByDay.txt"))
+data_MS = read.table(here("Datasets", "data_MissingPerson_II.txt"))
+
+LSTM_ByDaytemp = read.table(here("Datasets", "LSTM_ByDay.txt"))
+LSTM_ByDaytemp = data.frame(subset(LSTM_ByDaytemp, LSTM_ByDaytemp$Var1 != "Incident.Date"))
+LSTM_ByDaytemp = data.frame(LSTM_ByDaytemp[1439:1616,])
+LSTM_ByDaytemp$Month = month(LSTM_ByDaytemp$Var1)
+rownames(LSTM_ByDaytemp) = 1:nrow(LSTM_ByDaytemp)
+sum(LSTM_ByDaytemp$Freq[1:30,1:3])
 
 #Now we make a new df called alldata where we show the forecasted values
 #for the months of 2022 with different methods and the real values
@@ -27,6 +37,8 @@ alldata$`Arima(5,3,2)` = as.numeric(fore_arimamine$Point.Forecast)
 alldata$`Arima(0,1,1)` = as.numeric(fore_arimaauto$Point.Forecast)
 alldata$Prophet = prophet_sum$Freq
 alldata$KNN = fore_knn$prediction.prediction
+alldata$LSTM_ByMonth = LSTM_ByMonth$Test.Predictions
+alldata$LSTM2 = data.frame()
 
 
 #Now we make a table to show the error of calculation
@@ -34,7 +46,7 @@ alldata$KNN = fore_knn$prediction.prediction
 #1st - Reverse alldata table so I don't have to preserve col/row names
 Error_Tables = data.frame(t(alldata))
 #Take out data I don't need
-Error_Tables = Error_Tables[3:8,1:4]
+Error_Tables = Error_Tables[3:9,1:4]
 #Rename to variables that are relevant
 colnames(Error_Tables) = c("MAE", "TS", "MSE", "RSFE")
 #Make all values equal to 0 so I can now calculate correct values!!!
@@ -47,6 +59,7 @@ Error_Tables$MAE[3] = mae(alldata$Actual, alldata$`Arima(5,3,2)`)
 Error_Tables$MAE[4] = mae(alldata$Actual, alldata$`Arima(0,1,1)`)
 Error_Tables$MAE[5] = mae(alldata$Actual, alldata$Prophet)
 Error_Tables$MAE[6] = mae(alldata$Actual, alldata$KNN)
+Error_Tables$MAE[7] = mae(alldata$Actual, alldata$LSTM_ByMonth)
 
 #Now get MSE from Metrics library
 Error_Tables$MSE[1] = mse(alldata$Actual, alldata$SMS)
@@ -55,6 +68,7 @@ Error_Tables$MSE[3] = mse(alldata$Actual, alldata$`Arima(5,3,2)`)
 Error_Tables$MSE[4] = mse(alldata$Actual, alldata$`Arima(0,1,1)`)
 Error_Tables$MSE[5] = mse(alldata$Actual, alldata$Prophet)
 Error_Tables$MSE[6] = mse(alldata$Actual, alldata$KNN)
+Error_Tables$MSE[7] = mse(alldata$Actual, alldata$LSTM_ByMonth)
 
 #MAD from Metrics library to calculate TS
 mad_SMS = mse(alldata$Actual, alldata$SMS)
@@ -63,6 +77,7 @@ mad_SMS_Holt = mse(alldata$Actual, alldata$SMS_Holt)
 `mad_Arima(0.1.1)` = mse(alldata$Actual, alldata$`Arima(0,1,1)`)
 mad_Prophet = mse(alldata$Actual, alldata$Prophet)
 mad_KNN = mse(alldata$Actual, alldata$KNN)
+mad_LSTM_ByMonth = mse(alldata$Actual, alldata$LSTM_ByMonth)
 
 #Online is telling me I can calculate RSFE by doing
 # rsfe <- sum(data$Actual-data$Forecast)
@@ -73,6 +88,7 @@ Error_Tables$RSFE[3] = sum(alldata$Actual - alldata$`Arima(5,3,2)`)
 Error_Tables$RSFE[4] = sum(alldata$Actual - alldata$`Arima(0,1,1)`)
 Error_Tables$RSFE[5] = sum(alldata$Actual - alldata$Prophet)
 Error_Tables$RSFE[6] = sum(alldata$Actual - alldata$KNN)
+Error_Tables$RSFE[7] = sum(alldata$Actual - alldata$LSTM_ByMonth)
 
 
 #TS (Tracking Signal) is calculated by doing RSFE/MAD
@@ -82,5 +98,7 @@ Error_Tables$TS[3] = Error_Tables$RSFE[3]/`mad_Arima(5,3,2)`
 Error_Tables$TS[4] = Error_Tables$RSFE[4]/`mad_Arima(0.1.1)`
 Error_Tables$TS[5] = Error_Tables$RSFE[5]/mad_Prophet
 Error_Tables$TS[6] = Error_Tables$RSFE[5]/mad_KNN
+Error_Tables$TS[7] = Error_Tables$RSFE[5]/mad_LSTM_ByMonth
 
+#write.table(Error_Tables, here("Datasets", "error_tables.txt"))
 
